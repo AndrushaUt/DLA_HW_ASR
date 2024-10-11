@@ -6,6 +6,7 @@ import torch
 from pyctcdecode import (
     Alphabet, 
     BeamSearchDecoderCTC,
+    build_ctcdecoder,
 )
 
 # TODO add CTC decode
@@ -18,12 +19,15 @@ from pyctcdecode import (
 class CTCTextEncoder:
     EMPTY_TOK = ""
 
-    def __init__(self, alphabet=None, **kwargs):
+    def __init__(self, alphabet=None, librispeech_vocab_path=None, lm_path=None,**kwargs):
         """
         Args:
             alphabet (list): alphabet for language. If None, it will be
                 set to ascii
         """
+        if librispeech_vocab_path is not None:
+            with open(librispeech_vocab_path) as f:
+                unigrams = [t.lower() for t in f.read().strip().split("\n")]
         if alphabet is None:
             alphabet = list(ascii_lowercase + " ")
 
@@ -32,7 +36,10 @@ class CTCTextEncoder:
 
         self.ind2char = dict(enumerate(self.vocab))
         self.char2ind = {v: k for k, v in self.ind2char.items()}
-        self.decoder = BeamSearchDecoderCTC(Alphabet(self.vocab, False), None)
+        if lm_path:
+            self.decoder = build_ctcdecoder(self.vocab, lm_path, unigrams)
+        else:
+            self.decoder = BeamSearchDecoderCTC(Alphabet(self.vocab, False), None)
 
     def __len__(self):
         return len(self.vocab)
