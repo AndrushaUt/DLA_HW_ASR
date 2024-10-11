@@ -28,6 +28,8 @@ class BaseTrainer:
         dataloaders,
         logger,
         writer,
+        log_predictions_type="argmax",
+        beam_size=None,
         epoch_len=None,
         skip_oom=True,
         batch_transforms=None,
@@ -74,6 +76,9 @@ class BaseTrainer:
         self.lr_scheduler = lr_scheduler
         self.text_encoder = text_encoder
         self.batch_transforms = batch_transforms
+
+        self.log_predictions_type = log_predictions_type,
+        self.beam_size = beam_size
 
         # define dataloaders
         self.train_dataloader = dataloaders["train"]

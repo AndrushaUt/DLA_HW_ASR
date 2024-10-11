@@ -1,7 +1,7 @@
 defaults:
   - model: deep_speech2
   - writer: wandb
-  - metrics: example
+  - metrics: beam_search
   - datasets: example
   - dataloader: example
   - transforms: example_only_instance
@@ -28,8 +28,11 @@ trainer:
   resume_from: null # null or path to the checkpoint dir with *.pth and config.yaml
   device: auto # device name or "auto"
   override: False # if True, will override the previous run with the same name
-  monitor: "min val_WER_(Argmax)" # "off" or "max/min metric_name", i.e. our goal is to maximize/minimize metric
+  monitor: "min val_WER_(BeamSearch)" # "off" or "max/min metric_name", i.e. our goal is to maximize/minimize metric
   save_period: 5 # checkpoint each save_period epochs in addition to the best epoch
   early_stop: ${trainer.n_epochs} # epochs for early stopping
   save_dir: "saved"
   seed: 1
+  beam_size: 5
+  max_grad_norm: 10
+  log_predictions_type: "beam_search"
