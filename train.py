@@ -12,7 +12,7 @@ from src.utils.init_utils import set_random_seed, setup_saving_and_logging
 warnings.filterwarnings("ignore", category=UserWarning)
 
 
-@hydra.main(version_base=None, config_path="src/configs", config_name="baseline")
+@hydra.main(version_base=None, config_path="src/configs", config_name="deep_speech2")
 def main(config):
     """
     Main script for training. Instantiates the model, optimizer, scheduler,
@@ -64,6 +64,9 @@ def main(config):
     # epoch_len = None or len(dataloader) for epoch-based training
     epoch_len = config.trainer.get("epoch_len")
 
+    log_predictions_type = config.trainer.get("log_predictions_type")
+    beam_size = config.trainer.get("beam_size")
+
     trainer = Trainer(
         model=model,
         criterion=loss_function,
@@ -77,6 +80,8 @@ def main(config):
         epoch_len=epoch_len,
         logger=logger,
         writer=writer,
+        log_predictions_type=log_predictions_type,
+        beam_size=beam_size,
         batch_transforms=batch_transforms,
         skip_oom=config.trainer.get("skip_oom", True),
     )
