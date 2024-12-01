@@ -1,0 +1,8 @@
+train: [] # metrics that are calculated during training
+inference: # metrics that are calculated during inference (eval)
+  - _target_: src.metrics.BeamSearchCustomCERMetric
+    name: "CER_(BeamSearchCustom)" # it is better to avoid spaces in names
+    beam_size: 5
+  - _target_: src.metrics.BeamSearchCustomWERMetric
+    name: "WER_(BeamSearchCustom)"
+    beam_size: 5

@@ -1,0 +1,7 @@
+defaults:
+  - instance_transforms: inference
+  - _self_
+
+# these lines are required if you do not use batch transforms
+batch_transforms:
+  inference: null

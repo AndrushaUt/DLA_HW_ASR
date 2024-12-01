@@ -24,6 +24,7 @@ wheels/
 *.egg-info/
 .installed.cfg
 *.egg
+argmax_deep_speech2/
 
 # PyInstaller
 #  Usually these files are written by a python script from a template

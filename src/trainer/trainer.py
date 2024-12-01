@@ -84,9 +84,12 @@ class Trainer(BaseTrainer):
             self.log_spectrogram(**batch)
             if self.log_predictions_type=="argmax":
                 self.log_predictions(**batch)
-            else:
+            elif self.log_predictions_type=="beam_search":
                 self.log_predictions_beam_search(**batch)
-            self.log_audio(**batch)
+            else:
+                self.log_predictions_beam_search_custom(**batch)
+
+        self.log_audio(**batch)
 
     def log_spectrogram(self, spectrogram, **batch):
         spectrogram_for_plot = spectrogram[0].detach().cpu()
@@ -138,6 +141,32 @@ class Trainer(BaseTrainer):
                 for inds, ind_len in zip(log_probs, log_probs_length.numpy())
             ]
             argmax_texts = [self.text_encoder.ctc_beam_search_decode(inds, self.beam_size) for inds in argmax_inds]
+            tuples = list(zip(argmax_texts, text, audio_path))
+            rows = {}
+            for pred, target, audio_path in tuples[:examples_to_log]:
+                target = self.text_encoder.normalize_text(target)
+                wer = calc_wer(target, pred) * 100
+                cer = calc_cer(target, pred) * 100
+
+                rows[Path(audio_path).name] = {
+                    "target": target,
+                    "predictions": pred,
+                    "wer": wer,
+                    "cer": cer,
+                }
+            self.writer.add_table(
+                "predictions", pd.DataFrame.from_dict(rows, orient="index")
+            )
+
+    def log_predictions_beam_search_custom(
+            self, text, log_probs, log_probs_length, audio_path, examples_to_log=10, **batch
+        ):
+            log_probs = log_probs.cpu().detach().numpy()
+            argmax_inds = [
+                inds[: int(ind_len)]
+                for inds, ind_len in zip(log_probs, log_probs_length.numpy())
+            ]
+            argmax_texts = [self.text_encoder.ctc_beam_search(inds, self.beam_size) for inds in argmax_inds]
             tuples = list(zip(argmax_texts, text, audio_path))
             rows = {}
             for pred, target, audio_path in tuples[:examples_to_log]:

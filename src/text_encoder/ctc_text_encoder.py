@@ -9,6 +9,9 @@ from pyctcdecode import (
     build_ctcdecoder,
 )
 
+import numpy as np
+from collections import defaultdict
+
 # TODO add CTC decode
 # TODO add BPE, LM, Beam Search support
 # Note: think about metrics and encoder
@@ -83,6 +86,34 @@ class CTCTextEncoder:
     
     def ctc_beam_search_decode(self, inds: torch.Tensor, beam_size: int) -> str:
         return self.decoder.decode(inds, beam_width=beam_size)
+    
+    def ctc_beam_search(self, probs, beam_size=10) -> str:
+        probs = np.exp(probs)
+        dp = {('', self.EMPTY_TOK) : 1.0, }
+        for prob in probs:
+            dp = self.expand_and_merge_path(dp, prob)
+            dp = self.truncate_paths(dp, beam_size)
+        dp = [(prefix, proba) for (prefix, _), proba in sorted(dp.items(), key=lambda x : -x[1])][0][0]
+        print(dp)
+        return dp
+    
+    def expand_and_merge_path(self, dp, next_token_probs):
+        new_dp = defaultdict(float)
+        for ind, next_token_prob in enumerate(next_token_probs):
+            cur_char = self.ind2char[ind]
+            for (prefix, last_char), v in dp.items():
+                if last_char == cur_char:
+                    new_prefix = prefix
+                else:
+                    if cur_char != self.EMPTY_TOK:
+                        new_prefix = prefix + cur_char
+                    else:
+                        new_prefix = prefix
+                new_dp[(new_prefix, cur_char)] += v * next_token_prob
+        return new_dp
+
+    def truncate_paths(self, dp, beam_size):
+        return dict(sorted(list(dp.items()), key = lambda x : -x[1])[:beam_size])
 
     @staticmethod
     def normalize_text(text: str):

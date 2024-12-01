@@ -46,3 +46,21 @@ class BeamSearchCERMetric(BaseMetric):
             pred_text = self.text_encoder.ctc_beam_search_decode(prob[:length], self.beam_size)
             cers.append(calc_cer(target_text, pred_text))
         return sum(cers) / len(cers)
+
+
+class BeamSearchCustomCERMetric(BaseMetric):
+    def __init__(self, text_encoder, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.text_encoder = text_encoder
+
+    def __call__(
+        self, log_probs: Tensor, log_probs_length: Tensor, text: List[str], **kwargs
+    ):
+        cers = []
+        probs_ = log_probs.cpu().detach().numpy()
+        lengths = log_probs_length.detach().numpy()
+        for prob, length, target_text in zip(probs_, lengths, text):
+            target_text = self.text_encoder.normalize_text(target_text)
+            pred_text = self.text_encoder.ctc_beam_search(prob[:length])
+            cers.append(calc_cer(target_text, pred_text))
+        return sum(cers) / len(cers)
