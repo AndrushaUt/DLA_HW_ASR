@@ -3,6 +3,8 @@ from tqdm.auto import tqdm
 
 from src.metrics.tracker import MetricTracker
 from src.trainer.base_trainer import BaseTrainer
+from pathlib import Path
+import json
 
 
 class Inferencer(BaseTrainer):
@@ -94,6 +96,7 @@ class Inferencer(BaseTrainer):
         """
         part_logs = {}
         for part, dataloader in self.evaluation_dataloaders.items():
+            print(f"{self.save_path}/{part}/ - dir with saved predictions",)
             logs = self._inference_part(part, dataloader)
             part_logs[part] = logs
         return part_logs
@@ -156,7 +159,10 @@ class Inferencer(BaseTrainer):
 
             if self.save_path is not None:
                 # you can use safetensors or other lib here
-                torch.save(output, self.save_path / part / f"output_{output_id}.pth")
+                # torch.save(output, self.save_path / part / f"output_{output_id}.pth")
+                filename = str(Path(batch.get("audio_path")[i]).stem)
+                with open(f"{self.save_path}/{part}/{filename}.json", "w") as f:
+                    f.write(json.dumps(output))
 
         return batch
 
